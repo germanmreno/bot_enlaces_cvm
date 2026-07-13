@@ -13,5 +13,13 @@ ENLACE_2_WEB_URL = os.getenv("ENLACE_2_WEB_URL", "")
 IMAGE_SELECTOR = os.getenv("IMAGE_SELECTOR", "img[alt='Daily Graph']")
 PING_INTERVAL = int(os.getenv("PING_INTERVAL", "60"))
 PING_TIMEOUT = int(os.getenv("PING_TIMEOUT", "5"))
-ALERT_THRESHOLD = int(os.getenv("ALERT_THRESHOLD", "2"))
+RETRY_DELAY = 10
 REPORT_INTERVAL = int(os.getenv("REPORT_INTERVAL", "3600"))
+
+CANTV_TELEFONO = "0800-4378466"
+CANTV_INFO = (
+    "Corporacion Venezolana de Mineria RIF: G200124725\n"
+    "GPON CANTV ABA ULTRA DEDICADO 200 MBPS.\n"
+    "Circuito: 2319-0175535. VLAN 2720."
+)
+NETUNO_TELEFONO = "0212-7720010"
