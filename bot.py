@@ -11,6 +11,7 @@ from config import (
     IMAGE_SELECTOR,
     CANTV_TELEFONO, CANTV_INFO,
     NETUNO_TELEFONO,
+    OWNER_CHAT_ID,
 )
 from capture import capture_image
 from state import StateManager
@@ -21,6 +22,7 @@ KEYBOARD = ReplyKeyboardMarkup(
     [
         [KeyboardButton("/status"), KeyboardButton("/subscribe")],
         [KeyboardButton("/unsubscribe"), KeyboardButton("/reporte")],
+        [KeyboardButton("/sin_cafe"), KeyboardButton("/cafe_listo")],
     ],
     resize_keyboard=True,
     is_persistent=True,
@@ -40,6 +42,7 @@ class BotHandler:
             "• `/subscribe` - Suscribirse a alertas\n"
             "• `/unsubscribe` - Darse de baja\n"
             "• `/reporte` - Contactos de soporte\n"
+            "• `/mi_id` - Ver tu ID de chat\n"
             "• `/help` - Mostrar esta ayuda",
             parse_mode="Markdown",
             reply_markup=KEYBOARD,
@@ -127,6 +130,25 @@ class BotHandler:
                     parse_mode="Markdown",
                 )
 
+    async def mi_id(self, update, context: ContextTypes.DEFAULT_TYPE):
+        chat_id = update.effective_chat.id
+        await update.message.reply_text(
+            f"Tu ID de chat es: `{chat_id}`",
+            parse_mode="Markdown",
+            reply_markup=KEYBOARD,
+        )
+
+    async def sin_cafe(self, update, context: ContextTypes.DEFAULT_TYPE):
+        if update.effective_chat.id != OWNER_CHAT_ID:
+            return
+        await self.alert_all("☕ *¡NO HAY CAFE EN POLVO!* ☕\n Reportense con el supervisor.")
+
+    async def cafe_listo(self, update, context: ContextTypes.DEFAULT_TYPE):
+        if update.effective_chat.id != OWNER_CHAT_ID:
+            return
+        await self.alert_all("✅ *¡YA HAY CAFE HECHO!* ✅\n Sirvase con confianza.")
+        await update.message.reply_text("Aviso enviado a todos.", reply_markup=KEYBOARD)
+
     async def handle_text(self, update, context: ContextTypes.DEFAULT_TYPE):
         pass
 
@@ -165,6 +187,9 @@ class BotHandler:
         app.add_handler(CommandHandler("status", self.status))
         app.add_handler(CommandHandler("reporte", self.reporte))
         app.add_handler(CommandHandler("help", self.start))
+        app.add_handler(CommandHandler("mi_id", self.mi_id))
+        app.add_handler(CommandHandler("sin_cafe", self.sin_cafe))
+        app.add_handler(CommandHandler("cafe_listo", self.cafe_listo))
         app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_text))
         self.application = app
         return app

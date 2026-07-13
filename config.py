@@ -23,3 +23,4 @@ CANTV_INFO = (
     "Circuito: 2319-0175535. VLAN 2720."
 )
 NETUNO_TELEFONO = "0212-7720010"
+OWNER_CHAT_ID = int(os.getenv("OWNER_CHAT_ID", "0"))
