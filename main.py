@@ -33,6 +33,7 @@ async def main():
     print(f"  Suscriptores: {len(state.subscribers)}")
 
     await app.initialize()
+    await bot_handler.setup_commands()
     await app.updater.start_polling()
     await app.start()
 

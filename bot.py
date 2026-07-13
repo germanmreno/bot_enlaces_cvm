@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime
 
-from telegram import InputFile, ReplyKeyboardMarkup, KeyboardButton
+from telegram import InputFile, BotCommand, BotCommandScopeChat, BotCommandScopeAllPrivateChats
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
 from config import (
@@ -18,21 +18,38 @@ from state import StateManager
 
 logger = logging.getLogger(__name__)
 
-KEYBOARD = ReplyKeyboardMarkup(
-    [
-        [KeyboardButton("/status"), KeyboardButton("/subscribe")],
-        [KeyboardButton("/unsubscribe"), KeyboardButton("/reporte")],
-        [KeyboardButton("/sin_cafe"), KeyboardButton("/cafe_listo")],
-    ],
-    resize_keyboard=True,
-    is_persistent=True,
-)
+PUBLIC_COMMANDS = [
+    BotCommand("status", "Estado actual y graficas"),
+    BotCommand("subscribe", "Suscribirse a alertas"),
+    BotCommand("unsubscribe", "Darse de baja"),
+    BotCommand("reporte", "Contactos de soporte"),
+    BotCommand("mi_id", "Ver tu ID de chat"),
+    BotCommand("help", "Mostrar ayuda"),
+    BotCommand("start", "Inicio"),
+]
+
+OWNER_COMMANDS = [
+    BotCommand("sin_cafe", "Avisar que no hay cafe"),
+    BotCommand("cafe_listo", "Avisar que ya hay cafe"),
+]
 
 
 class BotHandler:
     def __init__(self, state_manager: StateManager):
         self.state = state_manager
         self.application: Application | None = None
+
+    async def setup_commands(self):
+        bot = self.application.bot
+        await bot.set_my_commands(
+            PUBLIC_COMMANDS,
+            scope=BotCommandScopeAllPrivateChats(),
+        )
+        if OWNER_CHAT_ID:
+            await bot.set_my_commands(
+                PUBLIC_COMMANDS + OWNER_COMMANDS,
+                scope=BotCommandScopeChat(chat_id=OWNER_CHAT_ID),
+            )
 
     async def start(self, update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
@@ -45,7 +62,6 @@ class BotHandler:
             "• `/mi_id` - Ver tu ID de chat\n"
             "• `/help` - Mostrar esta ayuda",
             parse_mode="Markdown",
-            reply_markup=KEYBOARD,
         )
 
     async def subscribe(self, update, context: ContextTypes.DEFAULT_TYPE):
@@ -55,7 +71,6 @@ class BotHandler:
             "✅ *¡Suscrito exitosamente!*\n\n"
             "Recibiras alertas de caida y reportes periodicos de los enlaces.",
             parse_mode="Markdown",
-            reply_markup=KEYBOARD,
         )
 
     async def unsubscribe(self, update, context: ContextTypes.DEFAULT_TYPE):
@@ -64,7 +79,6 @@ class BotHandler:
         await update.message.reply_text(
             "✅ *Dado de baja.*\n\nYa no recibiras notificaciones.",
             parse_mode="Markdown",
-            reply_markup=KEYBOARD,
         )
 
     async def reporte(self, update, context: ContextTypes.DEFAULT_TYPE):
@@ -76,11 +90,7 @@ class BotHandler:
             f"*NetUno*\n"
             f"Telefono: {NETUNO_TELEFONO}"
         )
-        await update.message.reply_text(
-            text,
-            parse_mode="Markdown",
-            reply_markup=KEYBOARD,
-        )
+        await update.message.reply_text(text, parse_mode="Markdown")
 
     async def status(self, update, context: ContextTypes.DEFAULT_TYPE):
         if not self.state.monitors:
@@ -106,10 +116,7 @@ class BotHandler:
                 )
             status_text = "\n\n".join(lines)
 
-        await update.message.reply_text(
-            status_text, parse_mode="Markdown",
-            reply_markup=KEYBOARD,
-        )
+        await update.message.reply_text(status_text, parse_mode="Markdown")
 
         web_enlaces = [
             (ENLACE_1_NOMBRE, ENLACE_1_WEB_URL),
@@ -135,19 +142,19 @@ class BotHandler:
         await update.message.reply_text(
             f"Tu ID de chat es: `{chat_id}`",
             parse_mode="Markdown",
-            reply_markup=KEYBOARD,
         )
 
     async def sin_cafe(self, update, context: ContextTypes.DEFAULT_TYPE):
         if update.effective_chat.id != OWNER_CHAT_ID:
             return
         await self.alert_all("☕ *¡NO HAY CAFE EN POLVO!* ☕\n Reportense con el supervisor.")
+        await update.message.reply_text("Aviso enviado a todos.")
 
     async def cafe_listo(self, update, context: ContextTypes.DEFAULT_TYPE):
         if update.effective_chat.id != OWNER_CHAT_ID:
             return
         await self.alert_all("✅ *¡YA HAY CAFE HECHO!* ✅\n Sirvase con confianza.")
-        await update.message.reply_text("Aviso enviado a todos.", reply_markup=KEYBOARD)
+        await update.message.reply_text("Aviso enviado a todos.")
 
     async def handle_text(self, update, context: ContextTypes.DEFAULT_TYPE):
         pass
