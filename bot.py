@@ -2,7 +2,7 @@ import logging
 from datetime import datetime
 
 from telegram import InputFile, ReplyKeyboardMarkup, KeyboardButton
-from telegram.ext import Application, CommandHandler, ContextTypes
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
 from config import (
     BOT_TOKEN,
@@ -17,10 +17,14 @@ from state import StateManager
 
 logger = logging.getLogger(__name__)
 
-MENU = [
-    [KeyboardButton("/status"), KeyboardButton("/subscribe")],
-    [KeyboardButton("/unsubscribe"), KeyboardButton("/reporte")],
-]
+KEYBOARD = ReplyKeyboardMarkup(
+    [
+        [KeyboardButton("/status"), KeyboardButton("/subscribe")],
+        [KeyboardButton("/unsubscribe"), KeyboardButton("/reporte")],
+    ],
+    resize_keyboard=True,
+    is_persistent=True,
+)
 
 
 class BotHandler:
@@ -38,7 +42,7 @@ class BotHandler:
             "• `/reporte` - Contactos de soporte\n"
             "• `/help` - Mostrar esta ayuda",
             parse_mode="Markdown",
-            reply_markup=ReplyKeyboardMarkup(MENU, resize_keyboard=True),
+            reply_markup=KEYBOARD,
         )
 
     async def subscribe(self, update, context: ContextTypes.DEFAULT_TYPE):
@@ -48,7 +52,7 @@ class BotHandler:
             "✅ *¡Suscrito exitosamente!*\n\n"
             "Recibiras alertas de caida y reportes periodicos de los enlaces.",
             parse_mode="Markdown",
-            reply_markup=ReplyKeyboardMarkup(MENU, resize_keyboard=True),
+            reply_markup=KEYBOARD,
         )
 
     async def unsubscribe(self, update, context: ContextTypes.DEFAULT_TYPE):
@@ -57,7 +61,7 @@ class BotHandler:
         await update.message.reply_text(
             "✅ *Dado de baja.*\n\nYa no recibiras notificaciones.",
             parse_mode="Markdown",
-            reply_markup=ReplyKeyboardMarkup(MENU, resize_keyboard=True),
+            reply_markup=KEYBOARD,
         )
 
     async def reporte(self, update, context: ContextTypes.DEFAULT_TYPE):
@@ -72,7 +76,7 @@ class BotHandler:
         await update.message.reply_text(
             text,
             parse_mode="Markdown",
-            reply_markup=ReplyKeyboardMarkup(MENU, resize_keyboard=True),
+            reply_markup=KEYBOARD,
         )
 
     async def status(self, update, context: ContextTypes.DEFAULT_TYPE):
@@ -101,7 +105,7 @@ class BotHandler:
 
         await update.message.reply_text(
             status_text, parse_mode="Markdown",
-            reply_markup=ReplyKeyboardMarkup(MENU, resize_keyboard=True),
+            reply_markup=KEYBOARD,
         )
 
         web_enlaces = [
@@ -122,6 +126,9 @@ class BotHandler:
                     caption=f"📸 *{nombre}*",
                     parse_mode="Markdown",
                 )
+
+    async def handle_text(self, update, context: ContextTypes.DEFAULT_TYPE):
+        pass
 
     async def alert_all(self, message: str):
         if not self.application:
@@ -158,5 +165,6 @@ class BotHandler:
         app.add_handler(CommandHandler("status", self.status))
         app.add_handler(CommandHandler("reporte", self.reporte))
         app.add_handler(CommandHandler("help", self.start))
+        app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_text))
         self.application = app
         return app
