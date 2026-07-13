@@ -1,0 +1,16 @@
+[Unit]
+Description=Bot Telegram Monitor de Enlaces
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/bot-enlaces
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/opt/bot-enlaces/venv/bin/python main.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,31 @@
+{
+  "subscribers": [
+    7324642499
+  ],
+  "monitors": {
+    "190.202.25.13": {
+      "name": "WAN CANTV 200Mbps",
+      "ip": "190.202.25.13",
+      "consecutive_failures": 0,
+      "last_success": 1783956532.0143979,
+      "last_failure": null,
+      "is_alerting": false,
+      "total_pings": 31,
+      "successful_pings": 31,
+      "hourly_total": 31,
+      "hourly_success": 31
+    },
+    "190.6.46.1": {
+      "name": "WAN NetUno 800Mbps",
+      "ip": "190.6.46.1",
+      "consecutive_failures": 0,
+      "last_success": 1783956532.048093,
+      "last_failure": null,
+      "is_alerting": false,
+      "total_pings": 3,
+      "successful_pings": 3,
+      "hourly_total": 3,
+      "hourly_success": 3
+    }
+  }
+}
