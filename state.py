@@ -48,11 +48,17 @@ class MonitorState:
 
 
 class StateManager:
-    def __init__(self, filepath: str = STATE_FILE):
+    def __init__(self, filepath: str = STATE_FILE, sync_dnd: bool = True):
         self.filepath = filepath
         self.subscribers: List[int] = []
         self.monitors: Dict[str, MonitorState] = {}
+        self.dnd_active: bool = False
+        existed = os.path.exists(filepath)
         self._load()
+        if sync_dnd and not existed:
+            from dnd import is_dnd
+            self.dnd_active = is_dnd()
+            self.save()
 
     def _load(self):
         if not os.path.exists(self.filepath):
@@ -61,6 +67,7 @@ class StateManager:
             with open(self.filepath, "r") as f:
                 data = json.load(f)
             self.subscribers = data.get("subscribers", [])
+            self.dnd_active = data.get("dnd_active", False)
             for key, val in data.get("monitors", {}).items():
                 self.monitors[key] = MonitorState.from_dict(val)
         except (json.JSONDecodeError, KeyError):
@@ -71,6 +78,7 @@ class StateManager:
         data = {
             "subscribers": self.subscribers,
             "monitors": {k: v.to_dict() for k, v in self.monitors.items()},
+            "dnd_active": self.dnd_active,
         }
         with open(self.filepath, "w") as f:
             json.dump(data, f, indent=2)

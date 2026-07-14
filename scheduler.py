@@ -1,3 +1,5 @@
+import logging
+
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
@@ -6,10 +8,13 @@ from config import (
     ENLACE_1_IP, ENLACE_2_IP, ENLACE_1_NOMBRE, ENLACE_2_NOMBRE,
     ENLACE_1_WEB_URL, ENLACE_2_WEB_URL,
 )
+from dnd import is_dnd, time_str
 from monitor import check_enlace
 from capture import capture_image
 from state import StateManager
 from bot import BotHandler
+
+logger = logging.getLogger(__name__)
 
 
 class Scheduler:
@@ -61,6 +66,33 @@ class Scheduler:
                 await self.bot.alert_all(alert_msg)
 
     async def _report_job(self):
+        dnd_now = is_dnd()
+        prev_dnd = self.state.dnd_active
+
+        if dnd_now and not prev_dnd:
+            self.state.dnd_active = True
+            self.state.save()
+            await self.bot.alert_all(
+                f"🌙 *Modo No Molestar activado* ({time_str()} VE)\n\n"
+                "No se enviaran reportes horarios hasta las 7:00 AM.\n"
+                "Las alertas de falla continuan activas."
+            )
+            logger.info("DND activado")
+            return
+
+        if not dnd_now and prev_dnd:
+            self.state.dnd_active = False
+            self.state.save()
+            await self.bot.alert_all(
+                f"☀️ *Modo Normal restaurado* ({time_str()} VE)\n\n"
+                "Los reportes horarios se reanudan."
+            )
+            logger.info("DND desactivado")
+
+        if dnd_now:
+            logger.info("DND activo - reporte omitido")
+            return
+
         for nombre, web_url in self._enlaces_web():
             if not web_url:
                 continue
